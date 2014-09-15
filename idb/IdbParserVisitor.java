@@ -1,6 +1,6 @@
 // Generated from D:/Work/Code/Intelij IDEA/grammars-v4/idb\IdbParser.g4 by ANTLR 4.4.1-dev
 
-    package com.intple.dbone.parser.idb;
+    package com.intple.dbone.parser.v4.idb;
 
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
@@ -238,6 +238,12 @@ public interface IdbParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitNonreserved_keywords(@NotNull IdbParser.Nonreserved_keywordsContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link IdbParser#unary_operator}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitUnary_operator(@NotNull IdbParser.Unary_operatorContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link IdbParser#start}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -429,6 +435,12 @@ public interface IdbParserVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitOperators(@NotNull IdbParser.OperatorsContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link IdbParser#postgis_operator}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitPostgis_operator(@NotNull IdbParser.Postgis_operatorContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link IdbParser#sort_specifier}.
 	 * @param ctx the parse tree

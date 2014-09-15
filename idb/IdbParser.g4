@@ -6,7 +6,7 @@ options {
 }
 
 @header {
-    package com.intple.dbone.parser.idb;
+    package com.intple.dbone.parser.v4.idb;
 }
 
 @members {
@@ -257,9 +257,14 @@ expr
   : numeric_literal
   | string_literal
   | ((database_name DOT)? schema_name DOT table_name DOT|(schema_name DOT)? table_name DOT|table_name DOT)? column_name
-  | BIND_PARAMETER
-  | NULL
+  | unary_operator expr
+  | <assoc=right> expr CARET expr
+  | expr ( MULTIPLY | DIVIDE | MODULAR ) expr
+  | expr ( PLUS | SUB ) expr
+  | expr ( LTH | LEQ | GTH | GEQ ) expr
+  | <assoc=right> expr EQUAL expr
   | function
+  | LEFT_PAREN expr RIGHT_PAREN
   | subquery
   | expr collate_expression
   ;
@@ -271,10 +276,32 @@ numeric_literal
 
 string_literal
   : STRING_LITERAL
+  | NULL
+  | DEFAULT
+  | BIND_PARAMETER
   ;
 
 collate_expression
   : COLLATE collate_id=column_name
+  ;
+
+unary_operator
+  : (CUSTOME_OPERAND | PLUS | MINUS | MULTIPLY | DIVIDE | TILDE | NOT_SIMILAR | SIMILAR_INSENSITIVE | NOT_SIMILAR_INSENSITIVE)
+  | NOT
+  | postgis_operator
+  ;
+
+postgis_operator
+  : INTERSECT2D
+  | INTERSECT3D
+  | OVERLAP
+  | LEFT_OF
+  | RIGHT_OF
+  | ABOVE
+  | OVERLAPS_ABOVE
+  | BELOW
+  | BOX_EQUAL
+  | DISTANCE
   ;
 
 expr_list
@@ -282,7 +309,7 @@ expr_list
   ;
 
 datatype
-  : INT
+  : any_name
   ;
 
 function_name

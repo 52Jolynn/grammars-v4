@@ -1,7 +1,7 @@
 lexer grammar IdbLexer;
 
 @header {
-    package com.intple.dbone.parser.idb;
+    package com.intple.dbone.parser.v4.idb;
 }
 
 @members {
@@ -553,6 +553,11 @@ NOT_SIMILAR : '!~';
 SIMILAR_INSENSITIVE : '~*';
 NOT_SIMILAR_INSENSITIVE : '!~*';
 
+BIND_PARAMETER
+ : '?' DIGIT*
+ | [:@$] IDENTIFIER
+ ;
+
 NUM : DIGIT+;
 
 fragment
@@ -573,8 +578,8 @@ LINE_COMMENT
     ;
  
 // User defined op -- anything that doesn't parse as another op
-CUSTOME_OPERAND : ('+' | '-' | '*' | '/' | '<' | '>' | '=' | '!' | '@' | '#' | '%' | '^' | '&' | '|' | '`' | TILDE)*
-            ('*' | '/' | '<' | '>' | '=' | '!' | '@' | '#' | '%' | '^' | '&' | '|' | '`' | TILDE);
+CUSTOME_OPERAND : ('+' | '-' | '*' | '/' | '<' | '>' | '=' | '!' | '@' | '#' | '%' | '^' | '&' | '|' | '`' | '?' | TILDE)*
+            ('*' | '/' | '<' | '>' | '=' | '!' | '@' | '#' | '%' | '^' | '&' | '|' | '`' | '?' | TILDE);
 
 /*
 ===============================================================================
@@ -589,11 +594,6 @@ IDENTIFIER
 QUOTED_IDENTIFIER
   : 'U&'? DOUBLE_QUOTE ( ESC_SEQ | ~'"' | '""' )* DOUBLE_QUOTE
   ;
-
-BIND_PARAMETER
- : '?' DIGIT*
- | [:@$] IDENTIFIER
- ;
 
 /*
 ===============================================================================
