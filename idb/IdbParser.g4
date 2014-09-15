@@ -109,6 +109,7 @@ table_stmt
 
 subquery
   : LEFT_PAREN select_stmt RIGHT_PAREN
+  | LEFT_PAREN values_stmt RIGHT_PAREN
   ;
 
 from_clause : FROM table_reference (COMMA table_reference)* #fromClause;
@@ -253,8 +254,23 @@ search_condition
   ;
 
 expr
-  : ((database_name DOT)? schema_name DOT table_name DOT|(schema_name DOT)? table_name DOT|table_name DOT)? column_name
+  : literal_value
   | BIND_PARAMETER
+  | ((database_name DOT)? schema_name DOT table_name DOT|(schema_name DOT)? table_name DOT|table_name DOT)? column_name
+  ;
+
+literal_value
+  : numeric_literal
+  | string_literal
+  ;
+
+numeric_literal
+  : unsigned_numeric_literal
+  | signed_numerical_literal
+  ;
+
+string_literal
+  : STRING_LITERAL
   ;
 
 expr_list
@@ -284,11 +300,6 @@ function_args
 function_arg
   : VARIADIC? expr
   | identifier ASSIGN expr
-  ;
-
-number
-  : unsigned_numeric_literal
-  | signed_numerical_literal
   ;
 
 unsigned_numeric_literal
