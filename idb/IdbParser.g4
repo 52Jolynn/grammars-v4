@@ -1,21 +1,3 @@
-/**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 parser grammar IdbParser;
 
 options {
@@ -40,51 +22,119 @@ sql
 
 statement
   : dml
-  | ddl
-  | dcl
   ;
 
 dml
-  :
-  ;
-
-ddl
-  :
-  ;
-
-dcl
-  :
+  : select_stmt
   ;
 
 select_stmt
-  :
+  : query_expression order_clause? limit_clause? offset_clause? fetch_clause? for_clause?
   ;
 
 update_stmt
-  :
+  : UPDATE
   ;
 
 delete_stmt
-  :
+  : DELETE
   ;
 
 insert_stmt
-  :
+  : INSERT INTO
+  ;
+
+query_expression
+  : query_specification (query_rel query_specification)*
+  | query_specification (query_rel query_expression)*
+  | LEFT_PAREN select_stmt RIGHT_PAREN (query_rel query_expression)*
+  | table_stmt
+  ;
+
+query_specification
+  : with_query? SELECT set_qualifier? select_list into_expression? from_clause? where_clause? group_clause? having_clause? window_clause?
+  ;
+
+query_rel
+  : (UNION | INTERSECT | EXCEPT) (ALL | DISTINCT)?
+  ;
+
+set_qualifier
+  : ALL
+  | DISTINCT (ON LEFT_PAREN expr_list RIGHT_PAREN)?
+  ;
+
+select_list
+  : select_sublist (COMMA select_sublist)*
+  ;
+
+select_sublist
+  : derived_column
+  | qualified_asterisk
+  ;
+
+derived_column
+  : expr as_clause?
+  ;
+
+qualified_asterisk
+  : (table_name DOT)? MULTIPLY
+  ;
+
+as_clause
+  : AS? (column_alias | truth_value | NULL)
+  ;
+
+truth_value
+  : TRUE
+  | FALSE
+  | UNKNOWN
+  ;
+
+into_expression
+  : INTO (TEMPORARY | TEMP | UNLOGGED)? TABLE? table_name
   ;
 
 with_query
-  : WITH RECURSIVE? with_query_name (LPAREN column_name_list RPAREN)? AS (select_stmt | values_stmt | insert_stmt | update_stmt | delete_stmt) #withQuery
+  : WITH RECURSIVE? with_query_name (LEFT_PAREN column_name_list RIGHT_PAREN)? AS LEFT_PAREN (select_stmt | values_stmt | insert_stmt | update_stmt | delete_stmt) RIGHT_PAREN #withQuery
   ;
 
 with_query_name
   : any_name
   ;
 
+table_stmt
+  : TABLE ONLY? table_name *? #tableStmt
+  ;
+
 subquery
-  : LPAREN select_stmt RPAREN
+  : LEFT_PAREN select_stmt RIGHT_PAREN
   ;
 
 from_clause : FROM table_reference (COMMA table_reference)* #fromClause;
+
+where_clause
+  : WHERE search_condition #whereClause
+  ;
+group_clause
+  : GROUP BY expr_list #groupClause
+  ;
+
+having_clause
+  : HAVING expr_list #havingClause
+  ;
+
+window_clause
+  : WINDOW window_specifier_list #windowClause
+  ;
+
+window_specifier_list
+  : window_specifier (COMMA window_specifier)*
+  ;
+
+window_specifier
+  : window_name AS window_definition
+  ;
 
 order_clause
   :  ORDER BY sort_specifier_list #orderClause
@@ -113,8 +163,19 @@ null_ordering
   ;
 
 limit_clause
-  : LIMIT (count | ALL) OFFSET start
-  | OFFSET start (ROW | ROWS) FETCH (FIRST | NEXT) count? (ROW | ROWS) ONLY
+  : LIMIT (count | ALL)
+  ;
+
+offset_clause
+  : OFFSET start (ROW | ROWS)?
+  ;
+
+fetch_clause
+  : FETCH (FIRST | NEXT) count? (ROW | ROWS) ONLY
+  ;
+
+for_clause
+  : FOR (UPDATE | NO KEY UPDATE | SHARE | KEY SHARE) (OF table_name_list)? NOWAIT
   ;
 
 count
@@ -169,7 +230,7 @@ table_subquery
   ;
 
 function
-  : function_name LPAREN function_args? RPAREN
+  : function_name LEFT_PAREN function_args? RIGHT_PAREN
   ;
 
 join_specification
@@ -184,19 +245,16 @@ named_columns_join : USING LEFT_PAREN join_column_list RIGHT_PAREN;
 join_column_list : column_name_list;
 
 values_stmt
-  : VALUES LPAREN expr_list RPAREN (LPAREN expr_list RPAREN)* order_clause? limit_clause? #valuesStmt
+  : VALUES LEFT_PAREN expr_list RIGHT_PAREN (LEFT_PAREN expr_list RIGHT_PAREN)* order_clause? limit_clause? #valuesStmt
   ;
 
 search_condition
-  : boolean_expr
+  : expr
   ;
 
 expr
-  :
-  ;
-
-boolean_expr
-  :
+  : ((database_name DOT)? schema_name DOT table_name DOT|(schema_name DOT)? table_name DOT|table_name DOT)? column_name
+  | BIND_PARAMETER
   ;
 
 expr_list
@@ -204,7 +262,7 @@ expr_list
   ;
 
 datatype
-  :
+  : INT
   ;
 
 function_name
@@ -260,6 +318,34 @@ table_name
 
 column_name
   : any_name
+  ;
+
+window_name
+  : any_name
+  ;
+
+exists_window_name
+  : any_name
+  ;
+
+window_definition
+  : exists_window_name (PARTITION BY expr_list)? order_clause? frame_clause?
+  ;
+
+frame_clause
+  : (RANGE | ROWS)? (frame_start=frame|BETWEEN frame_start=frame END frame_end=frame)
+  ;
+
+frame
+  : UNBOUNDED PRECEDING
+  | CURRENT ROW
+  | UNBOUNDED FOLLOWING
+  | expr PRECEDING
+  | expr FOLLOWING
+  ;
+
+table_name_list
+  : table_name (COMMA table_name)*
   ;
 
 column_name_list
