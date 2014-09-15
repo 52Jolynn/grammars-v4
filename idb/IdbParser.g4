@@ -231,7 +231,7 @@ table_subquery
   ;
 
 function
-  : function_name LEFT_PAREN function_args? RIGHT_PAREN
+  : function_name LEFT_PAREN set_qualifier? function_args? order_clause? RIGHT_PAREN
   ;
 
 join_specification
@@ -254,23 +254,27 @@ search_condition
   ;
 
 expr
-  : literal_value
-  | BIND_PARAMETER
-  | ((database_name DOT)? schema_name DOT table_name DOT|(schema_name DOT)? table_name DOT|table_name DOT)? column_name
-  ;
-
-literal_value
   : numeric_literal
   | string_literal
+  | ((database_name DOT)? schema_name DOT table_name DOT|(schema_name DOT)? table_name DOT|table_name DOT)? column_name
+  | BIND_PARAMETER
+  | NULL
+  | function
+  | subquery
+  | expr collate_expression
   ;
 
 numeric_literal
-  : unsigned_numeric_literal
-  | signed_numerical_literal
+  : NUM
+  | REAL_NUM
   ;
 
 string_literal
   : STRING_LITERAL
+  ;
+
+collate_expression
+  : COLLATE collate_id=column_name
   ;
 
 expr_list
@@ -295,24 +299,12 @@ function_reserved_name
 
 function_args
   : function_arg (COMMA function_arg)*
+  | MULTIPLY
   ;
 
 function_arg
   : VARIADIC? expr
   | identifier ASSIGN expr
-  ;
-
-unsigned_numeric_literal
-  : NUM
-  | REAL_NUM
-  ;
-
-signed_numerical_literal
-  : sign? unsigned_numeric_literal
-  ;
-
-sign
-  : PLUS | SUB
   ;
 
 database_name

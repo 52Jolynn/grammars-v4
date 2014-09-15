@@ -591,7 +591,8 @@ QUOTED_IDENTIFIER
   ;
 
 BIND_PARAMETER
- : '?'
+ : '?' DIGIT*
+ | [:@$] IDENTIFIER
  ;
 
 /*
