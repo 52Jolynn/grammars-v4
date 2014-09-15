@@ -109,7 +109,6 @@ table_stmt
 
 subquery
   : LEFT_PAREN select_stmt RIGHT_PAREN
-  | LEFT_PAREN values_stmt RIGHT_PAREN
   ;
 
 from_clause : FROM table_reference (COMMA table_reference)* #fromClause;
@@ -156,7 +155,7 @@ order_specification
   ;
 
 operators
-  : PLUS | SUB | MULTIPLY | DIVIDE | MODULAR | LTH | GTH | CUSTOME_OPERAND
+  : PLUS | SUB | MULTIPLY | DIVIDE | MODULAR | LTH | GTH | CUSTOME_OPERATOR
   ;
 
 null_ordering
@@ -228,6 +227,7 @@ derived_table
 
 table_subquery
   : subquery
+  | LEFT_PAREN values_stmt RIGHT_PAREN
   ;
 
 function
@@ -257,15 +257,28 @@ expr
   : numeric_literal
   | string_literal
   | ((database_name DOT)? schema_name DOT table_name DOT|(schema_name DOT)? table_name DOT|table_name DOT)? column_name
-  | unary_operator expr
+  | expr CAST_OPERATOR datatype
+  | <assoc=right> unary_operator expr
   | <assoc=right> expr CARET expr
   | expr ( MULTIPLY | DIVIDE | MODULAR ) expr
   | expr ( PLUS | SUB ) expr
-  | expr ( LTH | LEQ | GTH | GEQ ) expr
-  | <assoc=right> expr EQUAL expr
+  | expr IS expr
+  | expr (ISNULL | NOTNULL)
+  | any_other_operator expr
+  | expr any_other_operator expr
+  | expr NOT? IN (subquery|LEFT_PAREN expr_list RIGHT_PAREN)
+  | expr NOT? BETWEEN expr AND expr
+  | expr OVERLAPS expr
+  | expr NOT? LIKE
+  | expr ( LTH | GTH) expr
+  | <assoc=right> expr (EQUAL | NOT_EQUAL) expr
+  | <assoc=right> NOT expr
+  | expr AND expr
+  | expr OR expr
   | function
   | LEFT_PAREN expr RIGHT_PAREN
-  | subquery
+  | scalar_subquery
+  | tuple_value
   | expr collate_expression
   ;
 
@@ -286,8 +299,12 @@ collate_expression
   ;
 
 unary_operator
-  : (CUSTOME_OPERAND | PLUS | MINUS | MULTIPLY | DIVIDE | TILDE | NOT_SIMILAR | SIMILAR_INSENSITIVE | NOT_SIMILAR_INSENSITIVE)
-  | NOT
+  : PLUS | SUB
+  ;
+
+any_other_operator
+  : LEQ | GEQ | CONCATENATION_OPERATOR | NOT_SIMILAR | SIMILAR_INSENSITIVE | NOT_SIMILAR_INSENSITIVE
+  | CUSTOME_OPERATOR
   | postgis_operator
   ;
 
@@ -302,6 +319,14 @@ postgis_operator
   | BELOW
   | BOX_EQUAL
   | DISTANCE
+  ;
+
+scalar_subquery
+  :  subquery
+  ;
+
+tuple_value
+  : LEFT_PAREN expr_list RIGHT_PAREN
   ;
 
 expr_list

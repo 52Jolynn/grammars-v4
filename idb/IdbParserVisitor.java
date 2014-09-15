@@ -288,6 +288,12 @@ public interface IdbParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitString_literal(@NotNull IdbParser.String_literalContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link IdbParser#custom_operator}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCustom_operator(@NotNull IdbParser.Custom_operatorContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code fromClause}
 	 * labeled alternative in {@link IdbParser#from_clause}.
 	 * @param ctx the parse tree

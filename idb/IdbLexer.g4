@@ -154,6 +154,7 @@ INSERT : I N S E R T;
 INTERSECT : I N T E R S E C T;
 INTO : I N T O;
 IS : I S;
+ISNULL : I S N U L L;
 JOIN : J O I N;
 LEADING : L E A D I N G;
 LEFT : L E F T;
@@ -170,6 +171,7 @@ MODIFY : M O D I F Y;
 NATURAL : N A T U R A L;
 NOAUDIT : N O A U D I T;
 NOCOMPRESS : N O C O M P R E S S;
+NOTNULL : N O T N U L L;
 NOT : N O T;
 NOWAIT : N O W A I T;
 NULL : N U L L;
@@ -506,7 +508,7 @@ XMLDATA : X M L D A T A;
 // Operators
 
 // Cast Operator
-CAST_EXPRESSION
+CAST_OPERATOR
   : COLON COLON
   ;
 
@@ -578,7 +580,7 @@ LINE_COMMENT
     ;
  
 // User defined op -- anything that doesn't parse as another op
-CUSTOME_OPERAND : ('+' | '-' | '*' | '/' | '<' | '>' | '=' | '!' | '@' | '#' | '%' | '^' | '&' | '|' | '`' | '?' | TILDE)*
+CUSTOME_OPERATOR : ('+' | '-' | '*' | '/' | '<' | '>' | '=' | '!' | '@' | '#' | '%' | '^' | '&' | '|' | '`' | '?' | TILDE)*
             ('*' | '/' | '<' | '>' | '=' | '!' | '@' | '#' | '%' | '^' | '&' | '|' | '`' | '?' | TILDE);
 
 /*
