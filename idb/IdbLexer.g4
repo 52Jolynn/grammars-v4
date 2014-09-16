@@ -347,6 +347,7 @@ NULLS : N U L L S;
 
 OIDS : O I D S;
 ONLY : O N L Y;
+OVERLAPS : O V E R L A P S;
 OVERWRITE : O V E R W R I T E;
 OWNED : O W N E D;
 

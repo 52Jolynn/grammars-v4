@@ -49,6 +49,7 @@ query_expression
   | query_specification (query_rel query_expression)*
   | LEFT_PAREN select_stmt RIGHT_PAREN (query_rel query_expression)*
   | table_stmt
+  | values_stmt
   ;
 
 query_specification
@@ -82,13 +83,7 @@ qualified_asterisk
   ;
 
 as_clause
-  : AS? (column_alias | truth_value | NULL)
-  ;
-
-truth_value
-  : TRUE
-  | FALSE
-  | UNKNOWN
+  : AS? (column_alias | boolean_literal | NULL)
   ;
 
 into_expression
@@ -246,7 +241,7 @@ named_columns_join : USING LEFT_PAREN join_column_list RIGHT_PAREN;
 join_column_list : column_name_list;
 
 values_stmt
-  : VALUES LEFT_PAREN expr_list RIGHT_PAREN (LEFT_PAREN expr_list RIGHT_PAREN)* order_clause? limit_clause? #valuesStmt
+  : VALUES LEFT_PAREN expr_list RIGHT_PAREN (COMMA LEFT_PAREN expr_list RIGHT_PAREN)* order_clause? limit_clause? #valuesStmt
   ;
 
 search_condition
@@ -254,44 +249,98 @@ search_condition
   ;
 
 expr
-  : numeric_literal
-  | string_literal
-  | ((database_name DOT)? schema_name DOT table_name DOT|(schema_name DOT)? table_name DOT|table_name DOT)? column_name
-  | expr CAST_OPERATOR datatype
-  | <assoc=right> unary_operator expr
-  | <assoc=right> expr CARET expr
-  | expr ( MULTIPLY | DIVIDE | MODULAR ) expr
-  | expr ( PLUS | SUB ) expr
-  | expr IS expr
-  | expr (ISNULL | NOTNULL)
-  | any_other_operator expr
-  | expr any_other_operator expr
-  | expr NOT? IN (subquery|LEFT_PAREN expr_list RIGHT_PAREN)
-  | expr NOT? BETWEEN expr AND expr
-  | expr OVERLAPS expr
-  | expr NOT? LIKE
-  | expr ( LTH | GTH) expr
-  | <assoc=right> expr (EQUAL | NOT_EQUAL) expr
-  | <assoc=right> NOT expr
-  | expr AND expr
-  | expr OR expr
-  | function
-  | LEFT_PAREN expr RIGHT_PAREN
-  | scalar_subquery
-  | tuple_value
-  | expr collate_expression
+  : unsigned_numeric_literal #numericLiteral
+  | string_literal #stringLiteral
+  | ((database_name DOT)? schema_name DOT table_name DOT|(schema_name DOT)? table_name DOT|table_name DOT)? column_name #columnExpr
+  | data_type STRING_LITERAL #constantValue
+  | expr CAST_OPERATOR data_type #castOpExpr
+  | <assoc=right> unary_operator expr #unaryOpExpr
+  | <assoc=right> expr CARET expr #caretExpr
+  | expr ( MULTIPLY | DIVIDE | MODULAR ) expr #mulDivModExpr
+  | expr ( PLUS | SUB ) expr #plusSubExpr
+  | expr IS NOT? expr #isExpr
+  | expr (ISNULL | NOTNULL) #nullOrNotExpr
+  | any_other_operator expr #unaryOtherOp
+  | expr any_other_operator expr #otherOp
+  | expr IS OF LEFT_PAREN data_type_list RIGHT_PAREN #typeComparePredicate
+  | expr IS NOT? DISTINCT FROM expr #isDistinctExpr
+  | expr NOT? IN (subquery|values_stmt|tuple_value) #inPredicate
+  | expr NOT? BETWEEN expr AND expr #betweenPredicate
+  | expr OVERLAPS expr #overlapsExpr
+  | expr pattern_matcher expr (ESCAPE STRING_LITERAL)? #likePredicate
+  | expr ( LTH | GTH) expr #lessOrGreatThanExpr
+  | <assoc=right> expr (EQUAL | NOT_EQUAL) expr #eqExpr
+  | <assoc=right> NOT expr #notExpr
+  | expr AND expr #andExpr
+  | expr OR expr #orExpr
+  | function #funcExpr
+  | LEFT_PAREN expr RIGHT_PAREN #parenthesizedExpr
+  | scalar_subquery #scalarSubquery
+  | tuple_value #tupleExpr
+  | case_when #caseWhen
+  | cast_expr #castExpr
+  | array_constructor #arrayConstructor
+  | row_constructor #rowConstructor
+  | expr collate_expression #exprCollate
   ;
 
-numeric_literal
+unsigned_numeric_literal
   : NUM
   | REAL_NUM
   ;
 
 string_literal
   : STRING_LITERAL
+  | REGEX
   | NULL
   | DEFAULT
+  | MULTIPLY
   | BIND_PARAMETER
+  | datetime_literal
+  | boolean_literal
+  ;
+
+datetime_literal
+  : timestamp_literal
+  | time_literal
+  | date_literal
+  | interval_literal
+  ;
+
+interval_literal
+  : INTERVAL interval_precision? interval_string=STRING_LITERAL interval_qualifier? interval_precision?
+  ;
+
+interval_qualifier
+  : primary_datetime_field (TO primary_datetime_field)?
+  ;
+
+interval_precision
+  : LEFT_PAREN unsigned_numeric_literal RIGHT_PAREN
+  ;
+
+time_literal
+  : TIME time_string=STRING_LITERAL
+  ;
+
+timestamp_literal
+  : TIMESTAMP timestamp_string=STRING_LITERAL
+  ;
+
+date_literal
+  : DATE date_string=STRING_LITERAL
+  ;
+
+boolean_literal
+  : TRUE | FALSE | UNKNOWN
+  ;
+
+primary_datetime_field
+  : YEAR | MONTH | DAY | HOUR | MINUTE | SECOND
+  ;
+
+extended_datetime_field
+  : CENTURY | DECADE | DOW | DOY | EPOCH | ISODOW | ISOYEAR | MICROSECONDS | MILLENNIUM | MILLISECONDS | QUARTER | WEEK
   ;
 
 collate_expression
@@ -329,12 +378,54 @@ tuple_value
   : LEFT_PAREN expr_list RIGHT_PAREN
   ;
 
+case_when
+  : CASE expr (WHEN expr THEN expr)+ (ELSE expr)? END
+  | CASE (WHEN expr THEN expr)+ (ELSE expr)? END
+  ;
+
+cast_expr
+  : CAST LEFT_PAREN expr AS data_type RIGHT_PAREN
+  ;
+
+array_constructor
+  : ARRAY (scalar_subquery|LEFT_SQUARE expr_list? RIGHT_SQUARE)
+  ;
+
+row_constructor
+  : ROW LEFT_PAREN expr_list? RIGHT_PAREN
+  ;
+
+exists_predicate
+  : NOT? EXISTS scalar_subquery
+  ;
+
+pattern_matcher
+  : NOT? negativable_matcher
+  | regex_matcher
+  ;
+
+negativable_matcher
+  : LIKE | ILIKE | REGEXP | RLIKE
+  | SIMILAR TO
+  ;
+
+regex_matcher
+  : TILDE
+  | NOT_SIMILAR
+  | SIMILAR_INSENSITIVE
+  | NOT_SIMILAR_INSENSITIVE
+  ;
+
 expr_list
   : expr (COMMA expr)*
   ;
 
-datatype
+data_type
   : any_name
+  ;
+
+data_type_list
+  : data_type (COMMA data_type)*
   ;
 
 function_name
@@ -408,7 +499,7 @@ column_name_list
   ;
 
 column_definition
-  : column_name datatype
+  : column_name data_type
   ;
 
 column_definition_list
