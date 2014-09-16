@@ -323,6 +323,7 @@ expr
   | expr (compare_operator | custome_operator) quantifier scalar_subquery #quantifiedPredicate
   | xml_parse_expr #xmlParserExpr
   | xml_serialize_expr #xmlSerializeExpr
+  | PRIOR expr #priorExpr
   ;
 
 unsigned_numeric_literal
