@@ -102,7 +102,7 @@ select_sublist
   ;
 
 derived_column
-  : expr over_clause? as_clause?
+  : expr as_clause?
   ;
 
 qualified_asterisk
@@ -122,11 +122,15 @@ into_expression
   ;
 
 with_query
-  : WITH RECURSIVE? with_query_name (LEFT_PAREN column_name_list RIGHT_PAREN)? AS LEFT_PAREN (select_stmt | values_stmt | insert_stmt | update_stmt | delete_stmt) RIGHT_PAREN #withQuery
+  : WITH RECURSIVE? with_query_clause (COMMA with_query_clause)* #withQuery
   ;
 
 with_query_name
   : any_name
+  ;
+
+with_query_clause
+  : with_query_name (LEFT_PAREN column_name_list RIGHT_PAREN)? AS LEFT_PAREN (select_stmt | values_stmt | insert_stmt | update_stmt | delete_stmt) RIGHT_PAREN
   ;
 
 table_stmt
@@ -219,7 +223,7 @@ table_reference
 
 simple_table
   : ONLY? qualified_table_name MULTIPLY? correlation_specification?
-  | derived_table correlation_specification
+  | derived_table correlation_specification?
   ;
 
 joined_table
@@ -283,8 +287,9 @@ expr
   : unsigned_numeric_literal #numericLiteral
   | string_literal #stringLiteral
   | qualified_column_name #columnExpr
-  | data_type STRING_LITERAL #constantValue
+  | data_type (STRING_LITERAL | BIND_PARAMETER) #constantValue
   | expr CAST_OPERATOR data_type #castOpExpr
+  | expr (LEFT_SQUARE expr (COLON expr)? RIGHT_SQUARE)+ #arrayExpr
   | <assoc=right> unary_operator expr #unaryOpExpr
   | <assoc=right> expr CARET expr #caretExpr
   | expr ( MULTIPLY | DIVIDE | MODULAR ) expr #mulDivModExpr
@@ -296,6 +301,7 @@ expr
   | expr IS OF LEFT_PAREN data_type_list RIGHT_PAREN #typeComparePredicate
   | expr IS NOT? DISTINCT FROM expr #isDistinctExpr
   | expr NOT? IN (subquery|values_stmt|tuple_value) #inPredicate
+  | NOT? EXISTS scalar_subquery #existsPredicate
   | expr NOT? BETWEEN expr AND expr #betweenPredicate
   | expr OVERLAPS expr #overlapsExpr
   | expr pattern_matcher expr (ESCAPE STRING_LITERAL)? #likePredicate
@@ -308,12 +314,15 @@ expr
   | array_constructor #arrayConstructor
   | row_constructor #rowConstructor
   | value_function #valueFunction
-  | function #functionExpr
+  | function over_clause? #functionExpr
   | case_when #caseWhen
   | LEFT_PAREN expr RIGHT_PAREN #parenthesizedExpr
   | scalar_subquery #scalarSubquery
   | tuple_value #tupleExpr
   | expr collate_expression #exprCollate
+  | expr (compare_operator | custome_operator) quantifier scalar_subquery #quantifiedPredicate
+  | xml_parse_expr #xmlParserExpr
+  | xml_serialize_expr #xmlSerializeExpr
   ;
 
 unsigned_numeric_literal
@@ -378,13 +387,31 @@ collate_expression
   : COLLATE collate_id=column_name
   ;
 
+quantifier : all  | some ;
+
+all : ALL;
+
+some : SOME | ANY;
+
+compare_operator
+  : LTH | GTH | LEQ | GEQ | EQUAL | NOT_EQUAL
+  ;
+
 unary_operator
   : PLUS | SUB
   ;
 
 any_other_operator
   : LEQ | GEQ | CONCATENATION_OPERATOR | NOT_SIMILAR | SIMILAR_INSENSITIVE | NOT_SIMILAR_INSENSITIVE
-  | CUSTOME_OPERATOR
+  | JSON_ARRAY_ELEMENT_OR_FIELD
+  | JSON_AS_TEXT
+  | JSON_OBJECT_AT_PATH
+  | JSON_OBJECT_AT_PATH_AS_TEXT
+  | custome_operator
+  ;
+
+custome_operator
+  : CUSTOME_OPERATOR
   | postgis_operator
   ;
 
@@ -467,10 +494,6 @@ row_constructor
   : ROW LEFT_PAREN expr_list? RIGHT_PAREN
   ;
 
-exists_predicate
-  : NOT? EXISTS scalar_subquery
-  ;
-
 pattern_matcher
   : NOT? negativable_matcher
   | regex_matcher
@@ -488,12 +511,42 @@ regex_matcher
   | NOT_SIMILAR_INSENSITIVE
   ;
 
+xml_parse_expr
+  : XMLPARSE LEFT_PAREN (DOCUMENT | CONTENT) xml_value RIGHT_PAREN
+  ;
+
+xml_serialize_expr
+  : XMLSERIALIZE  LEFT_PAREN (DOCUMENT | CONTENT) xml_value AS data_type RIGHT_PAREN
+  ;
+
+xml_value
+  : STRING_LITERAL
+  | BIND_PARAMETER
+  ;
+
 expr_list
   : expr (COMMA expr)*
   ;
 
 data_type
-  : any_name
+  : any_name+ (LEFT_PAREN precision (COMMA scale)? RIGHT_PAREN | (LEFT_SQUARE variable_length? RIGHT_SQUARE)+)? ((WITHOUT | WITH) TIME ZONE)?
+  | INTERVAL (LEFT_SQUARE interval_fields RIGHT_SQUARE)? (LEFT_PAREN precision RIGHT_PAREN)?
+  ;
+
+precision
+  : NUM
+  ;
+
+scale
+  : NUM
+  ;
+
+variable_length
+  : NUM
+  ;
+
+interval_fields
+  : YEAR | MONTH | DAY | HOUR | MINUTE | SECOND | YEAR TO MONTH | DAY TO HOUR | DAY TO MINUTE | DAY TO SECOND | HOUR TO MINUTE | HOUR TO SECOND | MINUTE TO SECOND
   ;
 
 data_type_list
@@ -809,6 +862,7 @@ nonreserved_keywords
  | VERBOSE
  | WEEK
  | WINDOW
+ | WITH
  | WITHIN
  | WITHOUT
  | YEAR
