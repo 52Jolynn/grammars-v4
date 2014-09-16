@@ -45,8 +45,7 @@ insert_stmt
   ;
 
 query_expression
-  : query_specification (query_rel query_specification)*
-  | query_specification (query_rel query_expression)*
+  : query_specification (query_rel (query_specification|query_expression))*
   | LEFT_PAREN select_stmt RIGHT_PAREN (query_rel query_expression)*
   | table_stmt
   | values_stmt
@@ -75,11 +74,15 @@ select_sublist
   ;
 
 derived_column
-  : expr as_clause?
+  : expr over_clause? as_clause?
   ;
 
 qualified_asterisk
   : (table_name DOT)? MULTIPLY
+  ;
+
+over_clause
+  : OVER (window_name | LEFT_PAREN window_definition RIGHT_PAREN)
   ;
 
 as_clause
@@ -99,7 +102,7 @@ with_query_name
   ;
 
 table_stmt
-  : TABLE ONLY? table_name *? #tableStmt
+  : TABLE ONLY? table_name MULTIPLY? #tableStmt
   ;
 
 subquery
@@ -273,14 +276,15 @@ expr
   | <assoc=right> NOT expr #notExpr
   | expr AND expr #andExpr
   | expr OR expr #orExpr
-  | function #funcExpr
-  | LEFT_PAREN expr RIGHT_PAREN #parenthesizedExpr
-  | scalar_subquery #scalarSubquery
-  | tuple_value #tupleExpr
-  | case_when #caseWhen
   | cast_expr #castExpr
   | array_constructor #arrayConstructor
   | row_constructor #rowConstructor
+  | value_function #valueFunction
+  | function #functionExpr
+  | case_when #caseWhen
+  | LEFT_PAREN expr RIGHT_PAREN #parenthesizedExpr
+  | scalar_subquery #scalarSubquery
+  | tuple_value #tupleExpr
   | expr collate_expression #exprCollate
   ;
 
@@ -294,7 +298,6 @@ string_literal
   | REGEX
   | NULL
   | DEFAULT
-  | MULTIPLY
   | BIND_PARAMETER
   | datetime_literal
   | boolean_literal
@@ -387,6 +390,47 @@ cast_expr
   : CAST LEFT_PAREN expr AS data_type RIGHT_PAREN
   ;
 
+value_function
+  : bit_position_function
+  | extract_function
+  | substring_function
+  | trim_function
+  ;
+
+bit_position_function
+  : POSITION LEFT_PAREN expr IN expr RIGHT_PAREN
+  ;
+
+extract_function
+  : EXTRACT LEFT_PAREN extract_field_string=extract_field FROM expr RIGHT_PAREN
+  ;
+
+extract_field
+  : primary_datetime_field
+  | time_zone_field
+  | extended_datetime_field
+  ;
+
+time_zone_field
+  : TIMEZONE | TIMEZONE_HOUR | TIMEZONE_MINUTE
+  ;
+
+substring_function
+  : SUBSTRING LEFT_PAREN expr (FROM expr)? (FOR expr)? RIGHT_PAREN
+  ;
+
+trim_function
+  : TRIM LEFT_PAREN trim_operands RIGHT_PAREN
+  ;
+
+trim_operands
+  : (trim_specification? trim_character=expr? FROM)? trim_source=expr (COMMA trim_character=expr)?
+  ;
+
+trim_specification
+  : LEADING | TRAILING | BOTH
+  ;
+
 array_constructor
   : ARRAY (scalar_subquery|LEFT_SQUARE expr_list? RIGHT_SQUARE)
   ;
@@ -475,7 +519,7 @@ exists_window_name
   ;
 
 window_definition
-  : exists_window_name (PARTITION BY expr_list)? order_clause? frame_clause?
+  : exists_window_name? (PARTITION BY expr_list)? order_clause? frame_clause?
   ;
 
 frame_clause

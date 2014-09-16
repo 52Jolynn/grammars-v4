@@ -78,13 +78,6 @@ public interface IdbParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitStringLiteral(@NotNull IdbParser.StringLiteralContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code funcExpr}
-	 * labeled alternative in {@link IdbParser#expr}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitFuncExpr(@NotNull IdbParser.FuncExprContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link IdbParser#pattern_matcher}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -130,12 +123,6 @@ public interface IdbParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitPrimary_datetime_field(@NotNull IdbParser.Primary_datetime_fieldContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link IdbParser#datatype_list}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitDatatype_list(@NotNull IdbParser.Datatype_listContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link IdbParser#window_definition}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -160,6 +147,12 @@ public interface IdbParserVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitQuery_specification(@NotNull IdbParser.Query_specificationContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link IdbParser#over_clause}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitOver_clause(@NotNull IdbParser.Over_clauseContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code caretExpr}
 	 * labeled alternative in {@link IdbParser#expr}.
@@ -275,6 +268,12 @@ public interface IdbParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitSimple_table(@NotNull IdbParser.Simple_tableContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link IdbParser#bit_position_function}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitBit_position_function(@NotNull IdbParser.Bit_position_functionContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code unaryOtherOp}
 	 * labeled alternative in {@link IdbParser#expr}.
 	 * @param ctx the parse tree
@@ -300,6 +299,12 @@ public interface IdbParserVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitDerived_table(@NotNull IdbParser.Derived_tableContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link IdbParser#substring_function}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSubstring_function(@NotNull IdbParser.Substring_functionContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code orderClause}
 	 * labeled alternative in {@link IdbParser#order_clause}.
@@ -372,6 +377,12 @@ public interface IdbParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitFunction_args(@NotNull IdbParser.Function_argsContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link IdbParser#trim_operands}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTrim_operands(@NotNull IdbParser.Trim_operandsContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link IdbParser#fetch_clause}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -422,17 +433,23 @@ public interface IdbParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitRow_constructor(@NotNull IdbParser.Row_constructorContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link IdbParser#value_function}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitValue_function(@NotNull IdbParser.Value_functionContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link IdbParser#sort_specifier_list}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitSort_specifier_list(@NotNull IdbParser.Sort_specifier_listContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link IdbParser#datatype}.
+	 * Visit a parse tree produced by {@link IdbParser#time_zone_field}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitDatatype(@NotNull IdbParser.DatatypeContext ctx);
+	T visitTime_zone_field(@NotNull IdbParser.Time_zone_fieldContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link IdbParser#expr_list}.
 	 * @param ctx the parse tree
@@ -513,6 +530,18 @@ public interface IdbParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitJoin_specification(@NotNull IdbParser.Join_specificationContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link IdbParser#data_type}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitData_type(@NotNull IdbParser.Data_typeContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link IdbParser#trim_function}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTrim_function(@NotNull IdbParser.Trim_functionContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code betweenPredicate}
 	 * labeled alternative in {@link IdbParser#expr}.
 	 * @param ctx the parse tree
@@ -568,6 +597,13 @@ public interface IdbParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitJoin_column_list(@NotNull IdbParser.Join_column_listContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code functionExpr}
+	 * labeled alternative in {@link IdbParser#expr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFunctionExpr(@NotNull IdbParser.FunctionExprContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link IdbParser#function_arg}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -586,6 +622,12 @@ public interface IdbParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitFor_clause(@NotNull IdbParser.For_clauseContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link IdbParser#trim_specification}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTrim_specification(@NotNull IdbParser.Trim_specificationContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link IdbParser#correlation_specification}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -603,6 +645,13 @@ public interface IdbParserVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitStatement(@NotNull IdbParser.StatementContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code valueFunction}
+	 * labeled alternative in {@link IdbParser#expr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitValueFunction(@NotNull IdbParser.ValueFunctionContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code isDistinctExpr}
 	 * labeled alternative in {@link IdbParser#expr}.
@@ -707,6 +756,12 @@ public interface IdbParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitDelete_stmt(@NotNull IdbParser.Delete_stmtContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link IdbParser#data_type_list}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitData_type_list(@NotNull IdbParser.Data_type_listContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code plusSubExpr}
 	 * labeled alternative in {@link IdbParser#expr}.
 	 * @param ctx the parse tree
@@ -731,6 +786,12 @@ public interface IdbParserVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitTable_reference(@NotNull IdbParser.Table_referenceContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link IdbParser#extract_field}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExtract_field(@NotNull IdbParser.Extract_fieldContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code exprCollate}
 	 * labeled alternative in {@link IdbParser#expr}.
@@ -807,6 +868,12 @@ public interface IdbParserVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitPostgis_operator(@NotNull IdbParser.Postgis_operatorContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link IdbParser#extract_function}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExtract_function(@NotNull IdbParser.Extract_functionContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code typeComparePredicate}
 	 * labeled alternative in {@link IdbParser#expr}.
