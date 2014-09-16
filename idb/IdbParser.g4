@@ -26,6 +26,9 @@ statement
 
 dml
   : select_stmt
+  | update_stmt
+  | insert_stmt
+  | delete_stmt
   ;
 
 select_stmt
@@ -33,15 +36,40 @@ select_stmt
   ;
 
 update_stmt
-  : UPDATE
+  : UPDATE qualified_table_name SET update_list from_clause? where_clause? returning_clause?
   ;
 
 delete_stmt
-  : DELETE
+  : DELETE FROM qualified_table_name using_clause? where_clause? returning_clause?
   ;
 
 insert_stmt
-  : INSERT INTO
+  : INSERT into_expression ( LEFT_PAREN column_name_list RIGHT_PAREN )? ( VALUES insert_value | select_stmt | LEFT_PAREN select_stmt RIGHT_PAREN | DEFAULT VALUES ) returning_clause?
+  ;
+
+using_clause
+  : USING table_reference (COMMA table_reference)*
+  ;
+
+insert_value
+  : LEFT_PAREN expr_list RIGHT_PAREN (COMMA LEFT_PAREN expr_list RIGHT_PAREN)*
+  ;
+
+update_list
+  : update_content (COMMA update_content)*
+  ;
+
+update_content
+  : qualified_column_name EQUAL expr
+  | LEFT_PAREN column_name_list RIGHT_PAREN EQUAL update_value
+  ;
+
+update_value
+  : LEFT_PAREN expr_list RIGHT_PAREN (COMMA LEFT_PAREN expr_list RIGHT_PAREN)*
+  ;
+
+returning_clause
+  :	RETURNING select_list
   ;
 
 query_expression
@@ -90,7 +118,7 @@ as_clause
   ;
 
 into_expression
-  : INTO (TEMPORARY | TEMP | UNLOGGED)? TABLE? table_name
+  : INTO (TEMPORARY | TEMP | UNLOGGED)? TABLE? qualified_table_name
   ;
 
 with_query
@@ -190,7 +218,7 @@ table_reference
   ;
 
 simple_table
-  : ONLY? ((database_name DOT)? schema_name DOT)? table_name MULTIPLY? correlation_specification?
+  : ONLY? qualified_table_name MULTIPLY? correlation_specification?
   | derived_table correlation_specification
   ;
 
@@ -254,7 +282,7 @@ search_condition
 expr
   : unsigned_numeric_literal #numericLiteral
   | string_literal #stringLiteral
-  | ((database_name DOT)? schema_name DOT table_name DOT|(schema_name DOT)? table_name DOT|table_name DOT)? column_name #columnExpr
+  | qualified_column_name #columnExpr
   | data_type STRING_LITERAL #constantValue
   | expr CAST_OPERATOR data_type #castOpExpr
   | <assoc=right> unary_operator expr #unaryOpExpr
@@ -502,12 +530,24 @@ schema_name
   : any_name
   ;
 
+qualified_schema_name
+  : (database_name DOT)? schema_name
+  ;
+
 table_name
   : any_name
   ;
 
+qualified_table_name
+  : ((database_name DOT)? schema_name DOT)? table_name
+  ;
+
 column_name
   : any_name
+  ;
+
+qualified_column_name
+  : ((database_name DOT)? schema_name DOT table_name DOT|(schema_name DOT)? table_name DOT|table_name DOT)? column_name
   ;
 
 window_name
