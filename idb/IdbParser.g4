@@ -84,7 +84,7 @@ query_specification
   ;
 
 query_rel
-  : (UNION | INTERSECT | EXCEPT) (ALL | DISTINCT)?
+  : (UNION | INTERSECT | EXCEPT | MINUS) (ALL | DISTINCT)?
   ;
 
 set_qualifier
