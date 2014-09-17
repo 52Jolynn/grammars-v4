@@ -287,17 +287,17 @@ expr
   : unsigned_numeric_literal #numericLiteral
   | string_literal #stringLiteral
   | qualified_column_name #columnExpr
-  | data_type (STRING_LITERAL | BIND_PARAMETER) #constValue //int '123' or prior a.id
+  | data_type const_value #constValue //int '123' or prior a.id
   | expr CAST_OPERATOR data_type #castOpExpr
   | expr (LEFT_SQUARE expr (COLON expr)? RIGHT_SQUARE)+ #arrayExpr
   | <assoc=right> unary_operator expr #unaryOpExpr
-  | <assoc=right> expr CARET expr #caretExpr
+  | expr CARET expr #caretExpr
   | expr ( MULTIPLY | DIVIDE | MODULAR ) expr #mulDivModExpr
   | expr ( PLUS | SUB ) expr #plusSubExpr
   | expr IS NOT? expr #isExpr
   | expr (ISNULL | NOTNULL) #nullOrNotExpr
-  | any_other_operator expr #unaryOtherOp
-  | expr any_other_operator expr #otherOp
+  | <assoc=right> any_other_operator expr #unaryOtherOp
+  | expr any_other_operator expr? #otherOp
   | expr IS OF LEFT_PAREN data_type_list RIGHT_PAREN #typeComparePredicate
   | expr IS NOT? DISTINCT FROM expr #isDistinctExpr
   | expr NOT? IN (subquery|values_stmt|tuple_value) #inPredicate
@@ -319,7 +319,9 @@ expr
   | LEFT_PAREN expr RIGHT_PAREN #parenthesizedExpr
   | quantifier? scalar_subquery #scalarSubquery //(select * from a) or some(select * from a)
   | tuple_value #tupleExpr //(1,2)
-  | expr collate_expression #exprCollate
+  | expr expr_suffix #exprWithSuffix
+  | xml_predicate #xmlPredicate
+  | xml_function #xmlFunction
   | xml_parse_expr #xmlParserExpr
   | xml_serialize_expr #xmlSerializeExpr
   | PRIOR qualified_column_name #priorExpr
@@ -383,8 +385,21 @@ extended_datetime_field
   : CENTURY | DECADE | DOW | DOY | EPOCH | ISODOW | ISOYEAR | MICROSECONDS | MILLENNIUM | MILLISECONDS | QUARTER | WEEK
   ;
 
-collate_expression
+const_value
+  : STRING_LITERAL
+  | BIND_PARAMETER
+  | qualified_table_name
+  | any_name
+  ;
+
+expr_suffix
   : COLLATE collate_id=column_name
+  | AT TIME ZONE time_zone
+  | IS DOCUMENT
+  ;
+
+time_zone
+  : STRING_LITERAL
   ;
 
 quantifier : all  | some ;
@@ -524,6 +539,18 @@ xml_value
   | BIND_PARAMETER
   ;
 
+xml_predicate
+  : XMLEXISTS LEFT_PAREN expr PASSING by_ref? expr by_ref? RIGHT_PAREN
+  ;
+
+xml_function
+  : XMLROOT LEFT_PAREN expr COMMA (VERSION expr | NO VALUE) (COMMA STANDALONE (YES | NO VALUE?))? RIGHT_PAREN
+  ;
+
+by_ref
+  : BY REF
+  ;
+
 expr_list
   : expr (COMMA expr)*
   ;
@@ -570,7 +597,12 @@ function_args
 
 function_arg
   : VARIADIC? expr
-  | identifier ASSIGN expr
+  | variable_name ASSIGN expr
+  | expr AS expr
+  ;
+
+variable_name
+  : any_name
   ;
 
 database_name
