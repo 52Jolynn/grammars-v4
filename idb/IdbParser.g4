@@ -287,7 +287,7 @@ expr
   : unsigned_numeric_literal #numericLiteral
   | string_literal #stringLiteral
   | qualified_column_name #columnExpr
-  | data_type (STRING_LITERAL | BIND_PARAMETER) #constantValue
+  | data_type expr #constValue //int '123' or prior a.id
   | expr CAST_OPERATOR data_type #castOpExpr
   | expr (LEFT_SQUARE expr (COLON expr)? RIGHT_SQUARE)+ #arrayExpr
   | <assoc=right> unary_operator expr #unaryOpExpr
@@ -311,19 +311,17 @@ expr
   | expr AND expr #andExpr
   | expr OR expr #orExpr
   | cast_expr #castExpr
-  | array_constructor #arrayConstructor
-  | row_constructor #rowConstructor
+  | array_constructor #arrayConstructor //array[1] or array(select * from a)
+  | row_constructor #rowConstructor //row(1,2)
   | value_function #valueFunction
   | function over_clause? #functionExpr
   | case_when #caseWhen
   | LEFT_PAREN expr RIGHT_PAREN #parenthesizedExpr
-  | scalar_subquery #scalarSubquery
-  | tuple_value #tupleExpr
+  | quantifier? scalar_subquery #scalarSubquery //(select * from a) or some(select * from a)
+  | tuple_value #tupleExpr //(1,2)
   | expr collate_expression #exprCollate
-  | expr (compare_operator | custome_operator) quantifier scalar_subquery #quantifiedPredicate
   | xml_parse_expr #xmlParserExpr
   | xml_serialize_expr #xmlSerializeExpr
-  | PRIOR expr #priorExpr
   ;
 
 unsigned_numeric_literal
@@ -562,8 +560,6 @@ function_name
 function_reserved_name
   : LEFT
   | RIGHT
-  | ALL
-  | ANY
   ;
 
 function_args
@@ -799,6 +795,7 @@ nonreserved_keywords
  | PRECISION
  | PRESERVE
  | PRIMARY
+ | PRIOR
  | QUARTER
  | RANGE
  | REAL
