@@ -287,7 +287,7 @@ expr
   : unsigned_numeric_literal #numericLiteral
   | string_literal #stringLiteral
   | qualified_column_name #columnExpr
-  | data_type expr #constValue //int '123' or prior a.id
+  | data_type (STRING_LITERAL | BIND_PARAMETER) #constValue //int '123' or prior a.id
   | expr CAST_OPERATOR data_type #castOpExpr
   | expr (LEFT_SQUARE expr (COLON expr)? RIGHT_SQUARE)+ #arrayExpr
   | <assoc=right> unary_operator expr #unaryOpExpr
@@ -322,6 +322,7 @@ expr
   | expr collate_expression #exprCollate
   | xml_parse_expr #xmlParserExpr
   | xml_serialize_expr #xmlSerializeExpr
+  | PRIOR qualified_column_name #priorExpr
   ;
 
 unsigned_numeric_literal
@@ -795,7 +796,6 @@ nonreserved_keywords
  | PRECISION
  | PRESERVE
  | PRIMARY
- | PRIOR
  | QUARTER
  | RANGE
  | REAL

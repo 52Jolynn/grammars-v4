@@ -598,6 +598,13 @@ public interface IdbParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitSelect_sublist(@NotNull IdbParser.Select_sublistContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code priorExpr}
+	 * labeled alternative in {@link IdbParser#expr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitPriorExpr(@NotNull IdbParser.PriorExprContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link IdbParser#derived_column}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
